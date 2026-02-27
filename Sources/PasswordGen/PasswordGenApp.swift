@@ -45,7 +45,7 @@ struct PerfectPasswordGrabberApp: App {
             ContentView()
         }
         .windowResizability(.contentMinSize)
-        .defaultSize(width: 760, height: 1)
+        .defaultSize(width: 820, height: 620)
         .commands {
             CommandGroup(replacing: .appInfo) {
                 Button("About Perfect Password Grabber") {
