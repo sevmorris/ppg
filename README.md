@@ -8,7 +8,7 @@ Perfect Passwords Grabber does one thing: get strong passwords into your clipboa
 
 ## Download
 
-**[Perfect Passwords Grabber v1.1 (DMG)](https://github.com/sevmorris/ppg/releases/latest)**
+**[Perfect Passwords Grabber v1.2 (DMG)](https://github.com/sevmorris/ppg/releases/latest)**
 
 > ⚠️ **Important — Read Before First Launch**
 >

@@ -3,7 +3,7 @@ set -euo pipefail
 
 APP_NAME="Perfect Passwords Grabber"
 BINARY_NAME="PasswordGen"
-VERSION="1.1"
+VERSION="1.2"
 DMG_NAME="PerfectPasswordsGrabber-v${VERSION}.dmg"
 STAGING_DIR="build/dmg_staging"
 APP_BUNDLE="${STAGING_DIR}/${APP_NAME}.app"
