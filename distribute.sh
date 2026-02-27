@@ -39,7 +39,7 @@ cat > "${APP_BUNDLE}/Contents/Info.plist" << PLIST
     <key>CFBundleExecutable</key>
     <string>${BINARY_NAME}</string>
     <key>CFBundleIdentifier</key>
-    <string>com.sevmorris.perfectpasswordgrabber</string>
+    <string>com.sevmorris.perfectpasswordsgrabber</string>
     <key>CFBundleName</key>
     <string>${APP_NAME}</string>
     <key>CFBundleDisplayName</key>

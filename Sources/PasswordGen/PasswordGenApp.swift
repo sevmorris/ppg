@@ -37,7 +37,7 @@ private final class HelpWindowManager {
 // MARK: - App
 
 @main
-struct PerfectPasswordGrabberApp: App {
+struct PerfectPasswordsGrabberApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
     var body: some Scene {
