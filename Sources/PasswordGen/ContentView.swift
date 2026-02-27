@@ -19,7 +19,7 @@ struct ContentView: View {
     private var header: some View {
         HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: 6) {
-                Text("Perfect Password Grabber")
+                Text("Perfect Passwords Grabber")
                     .font(.headline)
                 Text("Each password is generated server-side by GRC.com from a hardware random number generator seeded with atmospheric noise, thermal noise, and CPU jitter — sources that are fundamentally unpredictable. The raw entropy is cryptographically whitened before being used, so no pattern or bias survives. Every page refresh produces a completely independent set.")
                     .font(.footnote)

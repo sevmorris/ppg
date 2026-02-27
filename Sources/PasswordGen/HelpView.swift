@@ -5,13 +5,13 @@ struct HelpView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
 
-                Text("Perfect Password Grabber")
+                Text("Perfect Passwords Grabber")
                     .font(.title2.bold())
 
                 Divider()
 
                 section("What It Does") {
-                    Text("Perfect Password Grabber fetches cryptographically strong passwords from GRC.com's Ultra High Security Password Generator. Each refresh asks the server to generate a completely new, independent set of three passwords using a hardware random number generator. Nothing is stored, reused, or logged — every password is genuinely one-of-a-kind.")
+                    Text("Perfect Passwords Grabber fetches cryptographically strong passwords from GRC.com's Ultra High Security Password Generator. Each refresh asks the server to generate a completely new, independent set of three passwords using a hardware random number generator. Nothing is stored, reused, or logged — every password is genuinely one-of-a-kind.")
                 }
 
                 section("The Three Password Types") {

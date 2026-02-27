@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-APP_NAME="Perfect Password Grabber"
+APP_NAME="Perfect Passwords Grabber"
 BINARY_NAME="PasswordGen"
 VERSION="1.0"
-DMG_NAME="PerfectPasswordGrabber-v${VERSION}.dmg"
+DMG_NAME="PerfectPasswordsGrabber-v${VERSION}.dmg"
 STAGING_DIR="build/dmg_staging"
 APP_BUNDLE="${STAGING_DIR}/${APP_NAME}.app"
 

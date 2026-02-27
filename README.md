@@ -1,21 +1,21 @@
 **Password Fetcher for macOS**
 
-Perfect Password Grabber fetches cryptographically random passwords from [GRC.com's Ultra High Security Password Generator](https://www.grc.com/passwords.htm). Each refresh asks GRC's server to generate a completely new, independent set of three passwords. Nothing is stored, reused, or logged — every password is genuinely one-of-a-kind.
+Perfect Passwords Grabber fetches cryptographically random passwords from [GRC.com's Ultra High Security Password Generator](https://www.grc.com/passwords.htm). Each refresh asks GRC's server to generate a completely new, independent set of three passwords. Nothing is stored, reused, or logged — every password is genuinely one-of-a-kind.
 
 ## Design Philosophy
 
-Perfect Password Grabber does one thing: get strong passwords into your clipboard with as little friction as possible. It fetches, displays, and copies. No generation happens locally — the randomness comes from GRC's hardware entropy source, which is better than anything a laptop can produce.
+Perfect Passwords Grabber does one thing: get strong passwords into your clipboard with as little friction as possible. It fetches, displays, and copies. No generation happens locally — the randomness comes from GRC's hardware entropy source, which is better than anything a laptop can produce.
 
 ## Download
 
-**[Perfect Password Grabber v1.0 (DMG)](https://github.com/sevmorris/ppg/releases/latest)**
+**[Perfect Passwords Grabber v1.0 (DMG)](https://github.com/sevmorris/ppg/releases/latest)**
 
 > ⚠️ **Important — Read Before First Launch**
 >
-> macOS will block the app with a malware warning because it is not notarized with Apple. After mounting the DMG and dragging Perfect Password Grabber to Applications, **you must run this command in Terminal:**
+> macOS will block the app with a malware warning because it is not notarized with Apple. After mounting the DMG and dragging Perfect Passwords Grabber to Applications, **you must run this command in Terminal:**
 >
 > ```
-> xattr -cr "/Applications/Perfect Password Grabber.app"
+> xattr -cr "/Applications/Perfect Passwords Grabber.app"
 > ```
 >
 > Without this step, macOS will refuse to open the app.
