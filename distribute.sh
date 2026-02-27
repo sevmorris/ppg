@@ -27,6 +27,9 @@ echo ""
 # Copy binary
 cp ".build/release/${BINARY_NAME}" "${APP_BUNDLE}/Contents/MacOS/${BINARY_NAME}"
 
+# Copy icon
+cp "assets/AppIcon.icns" "${APP_BUNDLE}/Contents/Resources/AppIcon.icns"
+
 # Info.plist
 cat > "${APP_BUNDLE}/Contents/Info.plist" << PLIST
 <?xml version="1.0" encoding="UTF-8"?>
@@ -41,6 +44,8 @@ cat > "${APP_BUNDLE}/Contents/Info.plist" << PLIST
     <string>${APP_NAME}</string>
     <key>CFBundleDisplayName</key>
     <string>${APP_NAME}</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
     <key>CFBundleVersion</key>
     <string>1</string>
     <key>CFBundleShortVersionString</key>
