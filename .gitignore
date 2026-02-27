@@ -1,5 +1,5 @@
 .build/
 *.o
 *.d
-PerfectPasswordGrabber*.dmg
+PerfectPassword*.dmg
 build/
