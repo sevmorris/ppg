@@ -61,7 +61,7 @@ struct PerfectPasswordsGrabberApp: App {
                     ]))
                     NSApp.orderFrontStandardAboutPanel(options: [
                         .applicationName: "Perfect Passwords Grabber",
-                        .applicationVersion: "1.0",
+                        .applicationVersion: "1.3",
                         .credits: credits,
                         .version: "",
                     ])
