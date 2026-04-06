@@ -1,7 +1,7 @@
 import SwiftUI
 import AppKit
 
-private let appVersion = "1.3"
+let appVersion = "1.3"
 
 // MARK: - App Delegate
 
@@ -57,6 +57,10 @@ private final class HelpWindowManager: NSObject, NSWindowDelegate {
 struct PerfectPasswordsGrabberApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
+    init() {
+        Task { await checkForUpdates(silent: true) }
+    }
+
     var body: some Scene {
         WindowGroup("Perfect Passwords Grabber") {
             ContentView()
@@ -89,6 +93,10 @@ struct PerfectPasswordsGrabberApp: App {
                     HelpWindowManager.shared.open()
                 }
                 .keyboardShortcut("?", modifiers: .command)
+
+                Button("Check for Updates…") {
+                    Task { await checkForUpdates() }
+                }
             }
         }
     }
