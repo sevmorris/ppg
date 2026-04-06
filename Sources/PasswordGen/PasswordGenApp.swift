@@ -1,6 +1,8 @@
 import SwiftUI
 import AppKit
 
+private let appVersion = "1.3"
+
 // MARK: - App Delegate
 
 class AppDelegate: NSObject, NSApplicationDelegate {
@@ -9,34 +11,49 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        NSApp.activate(ignoringOtherApps: true)
+        if #available(macOS 14.0, *) {
+            NSApp.activate()
+        } else {
+            NSApp.activate(ignoringOtherApps: true)
+        }
     }
 }
 
 // MARK: - Help Window
 
-private final class HelpWindowManager {
+private final class HelpWindowManager: NSObject, NSWindowDelegate {
     static let shared = HelpWindowManager()
     private var window: NSWindow?
 
     func open() {
-        if window == nil || !window!.isVisible {
+        if window?.isVisible != true {
             let controller = NSHostingController(rootView: HelpView())
             let w = NSWindow(contentViewController: controller)
             w.title = "Perfect Passwords Grabber Help"
             w.styleMask = [.titled, .closable, .resizable, .miniaturizable]
             w.setContentSize(NSSize(width: 600, height: 520))
             w.center()
+            w.delegate = self
             window = w
         }
         window?.makeKeyAndOrderFront(nil)
-        NSApp.activate(ignoringOtherApps: true)
+        if #available(macOS 14.0, *) {
+            NSApp.activate()
+        } else {
+            NSApp.activate(ignoringOtherApps: true)
+        }
+    }
+
+    func windowWillClose(_ notification: Notification) {
+        window = nil
     }
 }
 
 // MARK: - App
 
+#if !TESTING
 @main
+#endif
 struct PerfectPasswordsGrabberApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
@@ -61,7 +78,7 @@ struct PerfectPasswordsGrabberApp: App {
                     ]))
                     NSApp.orderFrontStandardAboutPanel(options: [
                         .applicationName: "Perfect Passwords Grabber",
-                        .applicationVersion: "1.3",
+                        .applicationVersion: appVersion,
                         .credits: credits,
                         .version: "",
                     ])

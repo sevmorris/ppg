@@ -1,4 +1,4 @@
-// swift-tools-version: 5.9
+// swift-tools-version: 5.10
 import PackageDescription
 
 let package = Package(
@@ -8,6 +8,14 @@ let package = Package(
         .executableTarget(
             name: "PasswordGen",
             path: "Sources/PasswordGen"
-        )
+        ),
+        .testTarget(
+            name: "PasswordGenTests",
+            dependencies: ["PasswordGen"],
+            path: "Tests/PasswordGenTests",
+            // Define TESTING so PasswordGenApp.swift can suppress @main in test builds,
+            // preventing a conflict with the XCTest runner's own entry point.
+            swiftSettings: [.define("TESTING")]
+        ),
     ]
 )

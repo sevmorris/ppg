@@ -6,5 +6,5 @@ swift build -c release
 
 echo ""
 echo "Build complete."
-echo "Run with: swift run"
+echo "Run with: swift run -c release"
 echo "Binary: .build/release/PasswordGen"

@@ -11,7 +11,6 @@ struct ContentView: View {
                 .frame(minWidth: 700)
             Spacer(minLength: 0)
         }
-        .onAppear { fetcher.fetch() }
     }
 
     // MARK: - Subviews
@@ -30,6 +29,7 @@ struct ContentView: View {
                 Label("Refresh", systemImage: "arrow.clockwise")
             }
             .disabled(fetcher.isLoading)
+            .keyboardShortcut("r", modifiers: .command)
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 14)
@@ -64,25 +64,26 @@ struct ContentView: View {
                     label: "64-char Hex",
                     description: "256 random bits — ideal for WPA pre-shared keys",
                     password: pw.hex,
-                    color: .blue
+                    color: .blue,
+                    copyShortcut: KeyboardShortcut("1", modifiers: .command)
                 )
                 Divider().padding(.leading, 20)
                 PasswordRow(
                     label: "63-char ASCII",
                     description: "Full printable ASCII character set",
                     password: pw.ascii,
-                    color: .purple
+                    color: .purple,
+                    copyShortcut: KeyboardShortcut("2", modifiers: .command)
                 )
                 Divider().padding(.leading, 20)
                 PasswordRow(
                     label: "63-char Alphanumeric",
                     description: "Letters and digits only — broadest device compatibility",
                     password: pw.alphanumeric,
-                    color: .green
+                    color: .green,
+                    copyShortcut: KeyboardShortcut("3", modifiers: .command)
                 )
             }
-        } else {
-            Color.clear.frame(height: 20)
         }
     }
 }
@@ -94,6 +95,7 @@ struct PasswordRow: View {
     let description: String
     let password: String
     let color: Color
+    let copyShortcut: KeyboardShortcut
 
     @State private var copied = false
 
@@ -141,13 +143,16 @@ struct PasswordRow: View {
         .controlSize(.small)
         .tint(copied ? .green : .primary)
         .animation(.easeInOut(duration: 0.15), value: copied)
+        .keyboardShortcut(copyShortcut)
+        .accessibilityHint("Copies the \(label) password to the clipboard")
     }
 
     private func copyPassword() {
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(password, forType: .string)
         withAnimation { copied = true }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+        Task {
+            try? await Task.sleep(for: .seconds(2))
             withAnimation { copied = false }
         }
     }
