@@ -62,6 +62,10 @@ cat > "${APP_BUNDLE}/Contents/Info.plist" << PLIST
 </plist>
 PLIST
 
+# Update README download link
+echo "Updating README download link to v${VERSION}..."
+sed -i '' "s|Perfect Passwords Grabber v[0-9][0-9.]*|Perfect Passwords Grabber v${VERSION}|g" README.md
+
 # Ad-hoc code sign
 echo "Signing..."
 codesign --force --deep --sign - "${APP_BUNDLE}" 2>/dev/null
