@@ -3,14 +3,41 @@ set -euo pipefail
 
 APP_NAME="Perfect Passwords Grabber"
 BINARY_NAME="PasswordGen"
-VERSION="1.5"
+VERSION="1.6"
 DMG_NAME="PerfectPasswordsGrabber-v${VERSION}.dmg"
 STAGING_DIR="build/dmg_staging"
 APP_BUNDLE="${STAGING_DIR}/${APP_NAME}.app"
+ENTITLEMENTS="PasswordGen.entitlements"
+
+# Developer ID identity and notarytool keychain profile, matching the sibling app
+# repos. A notarytool profile cannot be exported, so a new Mac needs this once
+# before its first release:
+#   xcrun notarytool store-credentials notarytool --apple-id <email> --team-id T9RLNAXPWU
+# Set NOTARY_PROFILE to use another.
+IDENTITY="Developer ID Application: Seven Morris (T9RLNAXPWU)"
+NOTARY_PROFILE="${NOTARY_PROFILE:-notarytool}"
+
+fail() { echo "" >&2; echo "✗ $*" >&2; exit 1; }
 
 echo "========================================"
 echo "  ${APP_NAME} v${VERSION} — Distribution"
 echo "========================================"
+echo ""
+
+# Preflight ────────────────────────────────────────────────────────────────────
+# Everything that can fail for an environmental reason is checked up front, so a
+# missing credential surfaces before a build rather than minutes into one.
+echo "Preflight..."
+for cmd in swift codesign hdiutil xcrun plutil; do
+    command -v "$cmd" >/dev/null 2>&1 || fail "required command not found: $cmd"
+done
+[[ -f "$ENTITLEMENTS" ]] || fail "entitlements file not found: $ENTITLEMENTS"
+plutil -lint "$ENTITLEMENTS" >/dev/null || fail "$ENTITLEMENTS is not a valid plist"
+security find-identity -v -p codesigning 2>/dev/null | grep -qF "$IDENTITY" \
+    || fail "signing identity not found in the keychain: $IDENTITY"
+xcrun notarytool history --keychain-profile "$NOTARY_PROFILE" >/dev/null 2>&1 \
+    || fail "notarytool profile '$NOTARY_PROFILE' is missing, rejected or unreachable — create it with: xcrun notarytool store-credentials $NOTARY_PROFILE --apple-id <email> --team-id T9RLNAXPWU"
+echo "✓ Toolchain, signing identity and notarytool profile all present"
 echo ""
 
 # Clean
@@ -21,6 +48,7 @@ mkdir -p "${APP_BUNDLE}/Contents/Resources"
 # Build
 echo "Building release binary..."
 swift build -c release 2>&1 | grep -v "^Build complete" || true
+[[ -f ".build/release/${BINARY_NAME}" ]] || fail "swift build produced no binary"
 echo "✓ Build complete"
 echo ""
 
@@ -66,9 +94,15 @@ PLIST
 echo "Updating README download link to v${VERSION}..."
 sed -i '' "s|Perfect Passwords Grabber v[0-9][0-9.]*|Perfect Passwords Grabber v${VERSION}|g" README.md
 
-# Ad-hoc code sign
-echo "Signing..."
-codesign --force --deep --sign - "${APP_BUNDLE}" 2>/dev/null
+# Code sign ────────────────────────────────────────────────────────────────────
+# Developer ID with the hardened runtime and a secure timestamp. All three are
+# required for notarization; an ad-hoc signature cannot be notarized at all.
+echo "Signing with Developer ID..."
+codesign --force --options runtime --timestamp \
+    --entitlements "$ENTITLEMENTS" \
+    --sign "$IDENTITY" \
+    "${APP_BUNDLE}" || fail "codesign failed"
+codesign --verify --strict --verbose=2 "${APP_BUNDLE}" 2>&1 | tail -2
 echo "✓ Signed"
 echo ""
 
@@ -84,6 +118,48 @@ hdiutil create \
     -ov \
     -format UDZO \
     "${DMG_NAME}" > /dev/null
-echo "✓ ${DMG_NAME}"
+[[ -f "${DMG_NAME}" ]] || fail "hdiutil produced no DMG"
+
+# Sign the DMG itself, not just the app inside it. Without this the image has no
+# usable signature of its own, so spctl cannot assess it even once the
+# notarization ticket is stapled. Signing must happen before notarization;
+# stapling afterwards does not disturb the signature.
+codesign --force --timestamp --sign "$IDENTITY" "${DMG_NAME}" || fail "signing the DMG failed"
+echo "✓ ${DMG_NAME} (signed)"
+echo ""
+
+# Notarize ─────────────────────────────────────────────────────────────────────
+# Apple staples the ticket to the DMG, so Gatekeeper clears the app on a machine
+# that has never seen it and without a network round trip at first launch.
+echo "Notarizing (Apple's service usually takes a few minutes)..."
+xcrun notarytool submit "${DMG_NAME}" --wait --keychain-profile "$NOTARY_PROFILE" \
+    || fail "notarization failed — run 'xcrun notarytool log <submission-id> --keychain-profile $NOTARY_PROFILE' for the reason"
+xcrun stapler staple "${DMG_NAME}" || fail "stapling failed"
+echo "✓ Notarized and stapled"
+echo ""
+
+# Verify ───────────────────────────────────────────────────────────────────────
+# Checks the shipping artifact rather than the inputs that produced it: a DMG
+# that is not properly stapled is exactly the failure users would hit first.
+echo "Verifying..."
+xcrun stapler validate "${DMG_NAME}" >/dev/null || fail "the DMG has no valid stapled ticket"
+spctl --assess --type open --context context:primary-signature "${DMG_NAME}" 2>&1 \
+    || fail "Gatekeeper rejected the DMG"
+
+# The DMG passing is necessary but not sufficient: what a user actually launches
+# is the app inside it, so assess that too and require notarization specifically
+# — a merely Developer ID-signed app would still be refused on a first launch.
+VERIFY_MOUNT="build/verify_mount"
+rm -rf "$VERIFY_MOUNT" && mkdir -p "$VERIFY_MOUNT"
+hdiutil attach "${DMG_NAME}" -nobrowse -readonly -mountpoint "$VERIFY_MOUNT" -quiet \
+    || fail "could not mount the finished DMG"
+ASSESS=$(spctl --assess --type exec -vv "$VERIFY_MOUNT/${APP_NAME}.app" 2>&1 || true)
+DMG_VERSION=$(defaults read "$PWD/$VERIFY_MOUNT/${APP_NAME}.app/Contents/Info.plist" CFBundleShortVersionString 2>/dev/null || echo "unreadable")
+hdiutil detach "$VERIFY_MOUNT" -quiet || true
+grep -q "source=Notarized Developer ID" <<<"$ASSESS" \
+    || fail "the app in the DMG is not recognised as notarized: $ASSESS"
+[[ "$DMG_VERSION" == "$VERSION" ]] \
+    || fail "DMG version mismatch: expected $VERSION, got $DMG_VERSION"
+echo "✓ DMG signed and stapled; app inside is $DMG_VERSION and notarized"
 echo ""
 echo "Done."
