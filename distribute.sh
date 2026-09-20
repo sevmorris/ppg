@@ -8,6 +8,7 @@ DMG_NAME="PerfectPasswordsGrabber-v${VERSION}.dmg"
 STAGING_DIR="build/dmg_staging"
 APP_BUNDLE="${STAGING_DIR}/${APP_NAME}.app"
 ENTITLEMENTS="PasswordGen.entitlements"
+APP_ZIP="build/${BINARY_NAME}-v${VERSION}-app.zip"
 
 # Developer ID identity and notarytool keychain profile, matching the sibling app
 # repos. A notarytool profile cannot be exported, so a new Mac needs this once
@@ -106,6 +107,24 @@ codesign --verify --strict --verbose=2 "${APP_BUNDLE}" 2>&1 | tail -2
 echo "✓ Signed"
 echo ""
 
+# Notarize the app ─────────────────────────────────────────────────────────────
+# Stapling only the DMG leaves the app unstapled the moment it is dragged out to
+# Applications, which is the form anyone actually runs. Gatekeeper still passes
+# it, by asking Apple instead — but that needs a working network on first
+# launch. So the app gets its own round trip and its own ticket, before the DMG
+# is built around it. The ticket covers this exact cdhash, so this has to follow
+# codesigning and precede the DMG.
+echo "Notarizing the app (first of two round trips)..."
+rm -f "$APP_ZIP"
+ditto -c -k --keepParent "${APP_BUNDLE}" "$APP_ZIP"
+xcrun notarytool submit "$APP_ZIP" --wait --keychain-profile "$NOTARY_PROFILE" \
+    || fail "app notarization failed"
+xcrun stapler staple "${APP_BUNDLE}" || fail "stapling the app failed"
+xcrun stapler validate "${APP_BUNDLE}" >/dev/null || fail "the app has no valid stapled ticket"
+rm -f "$APP_ZIP"
+echo "✓ App notarized and stapled"
+echo ""
+
 # Staging: README and Applications symlink
 cp README.txt "${STAGING_DIR}/README.txt"
 ln -s /Applications "${STAGING_DIR}/Applications"
@@ -131,7 +150,7 @@ echo ""
 # Notarize ─────────────────────────────────────────────────────────────────────
 # Apple staples the ticket to the DMG, so Gatekeeper clears the app on a machine
 # that has never seen it and without a network round trip at first launch.
-echo "Notarizing (Apple's service usually takes a few minutes)..."
+echo "Notarizing the DMG (second round trip)..."
 xcrun notarytool submit "${DMG_NAME}" --wait --keychain-profile "$NOTARY_PROFILE" \
     || fail "notarization failed — run 'xcrun notarytool log <submission-id> --keychain-profile $NOTARY_PROFILE' for the reason"
 xcrun stapler staple "${DMG_NAME}" || fail "stapling failed"
@@ -155,11 +174,21 @@ hdiutil attach "${DMG_NAME}" -nobrowse -readonly -mountpoint "$VERIFY_MOUNT" -qu
     || fail "could not mount the finished DMG"
 ASSESS=$(spctl --assess --type exec -vv "$VERIFY_MOUNT/${APP_NAME}.app" 2>&1 || true)
 DMG_VERSION=$(defaults read "$PWD/$VERIFY_MOUNT/${APP_NAME}.app/Contents/Info.plist" CFBundleShortVersionString 2>/dev/null || echo "unreadable")
+# The ticket on the copy that actually ships, not on the build product that was
+# stapled — those are the two that can drift apart. Captured before the detach
+# so the volume is never left mounted on a failure.
+if xcrun stapler validate "$VERIFY_MOUNT/${APP_NAME}.app" >/dev/null 2>&1; then
+    DMG_APP_STAPLED=1
+else
+    DMG_APP_STAPLED=0
+fi
 hdiutil detach "$VERIFY_MOUNT" -quiet || true
+[[ "$DMG_APP_STAPLED" == 1 ]] \
+    || fail "the app inside the DMG carries no notarization ticket of its own"
 grep -q "source=Notarized Developer ID" <<<"$ASSESS" \
     || fail "the app in the DMG is not recognised as notarized: $ASSESS"
 [[ "$DMG_VERSION" == "$VERSION" ]] \
     || fail "DMG version mismatch: expected $VERSION, got $DMG_VERSION"
-echo "✓ DMG signed and stapled; app inside is $DMG_VERSION and notarized"
+echo "✓ DMG signed and stapled; app inside is $DMG_VERSION, notarized and stapled in its own right"
 echo ""
 echo "Done."
