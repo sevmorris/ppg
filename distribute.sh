@@ -36,8 +36,30 @@ done
 plutil -lint "$ENTITLEMENTS" >/dev/null || fail "$ENTITLEMENTS is not a valid plist"
 security find-identity -v -p codesigning 2>/dev/null | grep -qF "$IDENTITY" \
     || fail "signing identity not found in the keychain: $IDENTITY"
-xcrun notarytool history --keychain-profile "$NOTARY_PROFILE" >/dev/null 2>&1 \
-    || fail "notarytool profile '$NOTARY_PROFILE' is missing, rejected or unreachable — create it with: xcrun notarytool store-credentials $NOTARY_PROFILE --apple-id <email> --team-id T9RLNAXPWU"
+# True when this user's console session is locked. Reads IOKit's console-user
+# records for our uid rather than taking the first: with more than one user
+# logged in, the first record need not be ours.
+screen_locked() {
+    local plist i uid
+    plist=$(ioreg -n Root -d1 -a 2>/dev/null) || return 1
+    for i in 0 1 2 3 4 5 6 7; do
+        uid=$(plutil -extract "IOConsoleUsers.$i.kCGSSessionUserIDKey" raw -o - - <<<"$plist" 2>/dev/null) || return 1
+        [[ "$uid" == "$(id -u)" ]] || continue
+        [[ "$(plutil -extract "IOConsoleUsers.$i.CGSSessionScreenIsLocked" raw -o - - <<<"$plist" 2>/dev/null)" == true ]]
+        return
+    done
+    return 1
+}
+
+# A locked screen reads as a missing profile: notarytool keeps its credentials
+# in the data-protection keychain, which locks with the screen. On 2026-09-24 a
+# release stopped here at 4 a.m. and was sent looking for a profile that was
+# there all along. Asked only once the check has failed, so it can never stop a
+# release that would otherwise go ahead.
+if ! xcrun notarytool history --keychain-profile "$NOTARY_PROFILE" >/dev/null 2>&1; then
+    screen_locked && fail "The screen is locked, so notarytool cannot read its keychain profile '$NOTARY_PROFILE' — unlock the Mac and re-run"
+    fail "notarytool profile '$NOTARY_PROFILE' is missing, rejected or unreachable — create it with: xcrun notarytool store-credentials $NOTARY_PROFILE --apple-id <email> --team-id T9RLNAXPWU"
+fi
 echo "✓ Toolchain, signing identity and notarytool profile all present"
 echo ""
 
