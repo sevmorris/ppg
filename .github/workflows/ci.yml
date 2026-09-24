@@ -1,0 +1,25 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    # A Swift package, so there is no project or scheme: `swift test` builds it
+    # and runs PasswordGenTests. The repo is public, so the macOS runner is free.
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Select Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          # The toolchain the sibling apps pin, and the one this builds with locally.
+          xcode-version: '26.3'
+
+      - name: Test
+        # A healthy run takes well under a minute; bound it so a hang fails fast.
+        timeout-minutes: 10
+        run: swift test
