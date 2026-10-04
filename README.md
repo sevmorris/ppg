@@ -34,7 +34,7 @@ All passwords are generated server-side by [GRC.com](https://www.grc.com/passwor
 
 ## System Requirements
 
-- macOS 13.0 (Ventura) or later
+- macOS 15.0 (Sequoia) or later
 - Apple Silicon
 - Internet connection
 

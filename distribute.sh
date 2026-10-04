@@ -108,7 +108,7 @@ cat > "${APP_BUNDLE}/Contents/Info.plist" << PLIST
     <key>NSPrincipalClass</key>
     <string>NSApplication</string>
     <key>LSMinimumSystemVersion</key>
-    <string>13.0</string>
+    <string>15.0</string>
 </dict>
 </plist>
 PLIST
