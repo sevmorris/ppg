@@ -26,20 +26,19 @@ swift build -c release --arch arm64 --arch x86_64
   (macOS 27.0)`. That warning is about the SDK's own default, not this package:
   the emitted slices are 13.0, as above. It is noise, but it will not go away.
 
-### What this changes in `distribute.sh`
+### What this changes in `release.sh`
 
-One real gotcha: a multi-arch build does **not** land in `.build/release/`.
-It lands in `.build/out/Products/Release/`. The copy step
+A multi-arch build does **not** land in `.build/release/`; it lands in
+`.build/out/Products/Release/`. distribute.sh copied from the fixed path, so it
+would have kept shipping a stale single-arch binary while the build looked
+universal. `release.sh` asks `swift build --show-bin-path` instead, with the
+same flags as the build, so the path follows the `--arch` flags on its own.
 
-```sh
-cp ".build/release/${BINARY_NAME}" "${APP_BUNDLE}/Contents/MacOS/${BINARY_NAME}"
-```
-
-would silently keep copying a stale single-arch binary from the old path if it
-were left alone — the build would look universal and the DMG would not be. The
-path has to move with the `--arch` flags, and the verify step should assert
-`lipo -archs` on the app inside the finished DMG, the same way it already
-asserts the version and the notarization.
+What does need changing: the build gains `--arch arm64 --arch x86_64` (on both
+calls, so the bin path matches), and the architecture check after it, which
+now requires arm64, should require both. The DMG verification should then
+assert `lipo -archs` on the app inside the finished image, the same way it
+already asserts the version and the notarization.
 
 ### Still unverified
 
@@ -52,7 +51,7 @@ than return — launch it properly, via `open`, or it will look like a hang.
 ### Also needs doing
 
 - Revert the "Apple Silicon" line added to the README's System Requirements
-  in 1.6, and the same line in `README.txt` inside the DMG
+  in 1.6
 - Expect the DMG to roughly double in size
 - Re-check notarization: two slices, one signature, but worth confirming the
   stapled ticket still validates rather than assuming it
