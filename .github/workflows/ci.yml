@@ -8,16 +8,35 @@ on:
 jobs:
   test:
     # A Swift package, so there is no project or scheme: `swift test` builds it
-    # and runs PasswordGenTests. The repo is public, so the macOS runner is free.
-    runs-on: macos-15
+    # and runs PasswordGenTests. The repo is public, so the macOS runners are free.
+    #
+    # macos-26 because it is the macOS most users are on, and a build that
+    # passes on 15 can still fail on 26: the sibling apps have hit that twice.
+    #
+    # xcode-27 because releases are built with Xcode 27 on the owner's Mac, and
+    # the 26.3 legs never compile what ships: the macOS 27 SDK and Swift 6.4.
+    # Its image is macOS 27, the OS users move to next. GitHub calls it a public
+    # preview, with no uptime promise.
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15
+            xcode: '26.3'
+          - os: macos-26
+            xcode: '26.3'
+          - os: xcode-27
+            xcode: '27.0'
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
 
       - name: Select Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          # The toolchain the sibling apps pin, and the one this builds with locally.
-          xcode-version: '26.3'
+          # 26.3 is what the sibling apps pin; 27.0, on the xcode-27 leg, is the
+          # toolchain this builds with locally.
+          xcode-version: ${{ matrix.xcode }}
 
       - name: Test
         # A healthy run takes well under a minute; bound it so a hang fails fast.
