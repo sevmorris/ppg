@@ -8,7 +8,7 @@ Perfect Passwords Grabber does one thing: get strong passwords into your clipboa
 
 ## Download
 
-**[Perfect Passwords Grabber v1.6 (DMG)](https://github.com/sevmorris/ppg/releases/latest)**
+**[Perfect Passwords Grabber v1.7 (DMG)](https://github.com/sevmorris/ppg/releases/latest)**
 
 Signed with a Developer ID and notarized by Apple. Mount the DMG, drag the app to Applications, and open it — there is no Gatekeeper warning and no Terminal step.
 
@@ -34,7 +34,7 @@ All passwords are generated server-side by [GRC.com](https://www.grc.com/passwor
 
 ## System Requirements
 
-- macOS 13.0 (Ventura) or later
+- macOS 15.0 (Sequoia) or later
 - Apple Silicon
 - Internet connection
 

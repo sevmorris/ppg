@@ -7,7 +7,7 @@ until 1.6 added "Apple Silicon" to the README's requirements, so an Intel user
 downloading any earlier DMG got an app that simply would not open, with no
 explanation anywhere.
 
-`Package.swift` already declares `.macOS(.v13)`, and Ventura runs on Intel, so
+`Package.swift` declares `.macOS("15.0")`, and Sequoia runs on Intel, so
 the deployment target is not the obstacle — the build just never asked for the
 second slice.
 
