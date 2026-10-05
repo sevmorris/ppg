@@ -1,7 +1,7 @@
 import SwiftUI
 import AppKit
 
-let appVersion = "1.7"
+let appVersion = "1.8"
 
 // MARK: - App Delegate
 
