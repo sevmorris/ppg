@@ -119,6 +119,8 @@ actor UpdateChecker {
 /// an update is actually available — don't bother the user with "you're up to date".
 @MainActor
 func checkForUpdates(silent: Bool = false) async {
+    if SelfUpdateFlow.bringForward() { return }
+
     let result = await UpdateChecker().check()
 
     switch result {
@@ -131,18 +133,9 @@ func checkForUpdates(silent: Bool = false) async {
         alert.runModal()
 
     case .available(let version, let downloadURL, let releaseURL):
-        let alert = NSAlert()
-        alert.messageText = "Update Available"
-        alert.informativeText = "Perfect Passwords Grabber \(version) is available."
-        alert.addButton(withTitle: "Download")
-        alert.addButton(withTitle: "Release Notes")
-        alert.addButton(withTitle: "Not Now")
-        let response = alert.runModal()
-        if response == .alertFirstButtonReturn {
-            NSWorkspace.shared.open(downloadURL)
-        } else if response == .alertSecondButtonReturn {
-            NSWorkspace.shared.open(releaseURL)
-        }
+        await SelfUpdateFlow.offer(SelfUpdatePrompt(appName: "Perfect Passwords Grabber", version: version,
+                                                    downloadURL: downloadURL, releaseURL: releaseURL),
+                                   silent: silent)
 
     case .needsNewerMacOS(let version, let minimum, let installed):
         // Nothing this Mac can install, so the check at launch says nothing.
